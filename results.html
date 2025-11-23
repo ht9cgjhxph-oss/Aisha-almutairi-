@@ -36,6 +36,28 @@
     margin-top:0;
   }
 
+  .top-buttons{
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    margin-top:20px;
+  }
+
+  .action-btn{
+    background:#7b3bb7;
+    color:#fff;
+    border:none;
+    padding:12px 18px;
+    border-radius:10px;
+    font-size:16px;
+    cursor:pointer;
+    font-weight:700;
+  }
+
+  .action-btn.delete{
+    background:#d9534f;
+  }
+
   .card{
     background:#fff;
     border-radius:18px;
@@ -93,6 +115,12 @@
   <h1>نتائج تقييم المجموعات</h1>
   <p>ترتيب المجموعات حسب مجموع النقاط من Firebase</p>
 
+  <!-- أزرار أعلى الصفحة -->
+  <div class="top-buttons">
+    <button class="action-btn" onclick="refreshPage()">🔄 تحديث الصفحة</button>
+    <button class="action-btn delete" onclick="resetScores()">🗑 حذف التصويتات</button>
+  </div>
+
   <div class="card" id="resultsBox">
     <p style="text-align:center;color:#999;">يتم تحميل النتائج...</p>
   </div>
@@ -104,7 +132,7 @@
 <!-- Firebase -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDsIVkyv6wEOTBngHKrlZwkiZ8btfU4Onc",
@@ -118,6 +146,7 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  // تحميل النتائج
   async function loadResults(){
     const box = document.getElementById("resultsBox");
     box.innerHTML = "<p style='text-align:center;color:#999;'>جارٍ تحميل النتائج...</p>";
@@ -132,7 +161,6 @@
       });
     });
 
-    // ترتيب حسب مجموع النقاط
     groups.sort((a,b)=> b.total - a.total);
 
     box.innerHTML = "";
@@ -155,6 +183,25 @@
   }
 
   loadResults();
+
+  // زر تحديث الصفحة
+  window.refreshPage = function(){
+    location.reload();
+  };
+
+  // زر حذف جميع النقاط
+  window.resetScores = async function(){
+    if(!confirm("هل أنتِ متأكدة من حذف جميع التصويتات؟ ❗")) return;
+
+    const snap = await getDocs(collection(db, "groups"));
+
+    for(const d of snap.docs){
+      await updateDoc(doc(db, "groups", d.id), { total: 0 });
+    }
+
+    alert("تم حذف جميع التصويتات بنجاح 🎉");
+    loadResults();
+  };
 </script>
 
 </body>
